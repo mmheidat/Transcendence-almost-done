@@ -137,20 +137,28 @@ services:
       - REDIS_URL=redis://redis:6379
       - JWT_SECRET=${JWT_SECRET}
       - FRONTEND_URL=${FRONTEND_URL:-https://localhost:8443}
+      # AI Configuration
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-1.5-flash}
+      - AI_MAX_INPUT_CHARS=${AI_MAX_INPUT_CHARS:-4000}
+      - AI_MAX_OUTPUT_TOKENS=${AI_MAX_OUTPUT_TOKENS:-2048}
+      - AI_REQUEST_TIMEOUT_MS=${AI_REQUEST_TIMEOUT_MS:-30000}
+      - AI_RATE_LIMIT_MAX=${AI_RATE_LIMIT_MAX:-10}
+      - AI_RATE_LIMIT_WINDOW=${AI_RATE_LIMIT_WINDOW:-300000}
     depends_on:
       - redis
     restart: unless-stopped
 
   # Backup Service
-  backup-service:
-    build:
-      context: ./services/backup-service
-      dockerfile: Dockerfile
-    container_name: pong-backup
-    volumes:
-      - ./data:/app/data
-      - ./backups:/app/backups
-    environment:
-      - BACKUP_INTERVAL=3600
-      - MAX_BACKUPS=48
-    restart: unless-stopped
+  # backup-service:
+  #   build:
+  #     context: ./services/backup-service
+  #     dockerfile: Dockerfile
+  #   container_name: pong-backup
+  #   volumes:
+  #     - ./data:/app/data
+  #     - ./backups:/app/backups
+  #   environment:
+  #     - BACKUP_INTERVAL=3600
+  #     - MAX_BACKUPS=48
+  #   restart: unless-stopped

@@ -2,6 +2,7 @@ import Game from './game';
 import { AuthService } from './services/AuthService.js';
 import { ProfileService } from './services/ProfileService.js';
 import { socialService, Message } from './services/SocialService.js';
+import { aiAssistantPage } from './pages/AiAssistant.js';
 
 // Services
 const authService = AuthService.getInstance();
@@ -30,6 +31,7 @@ const navPlay = document.getElementById('navPlay') as HTMLButtonElement;
 const navLeaderboard = document.getElementById('navLeaderboard') as HTMLButtonElement;
 const navProfile = document.getElementById('navProfile') as HTMLButtonElement;
 const navChat = document.getElementById('navChat') as HTMLButtonElement;
+const navAi = document.getElementById('navAi') as HTMLButtonElement;
 const navSettings = document.getElementById('navSettings') as HTMLButtonElement;
 const navLogout = document.getElementById('navLogout') as HTMLButtonElement;
 
@@ -42,6 +44,7 @@ const gameContainer = document.getElementById('game-container') as HTMLElement;
 const leaderboardSection = document.getElementById('leaderboardSection') as HTMLElement;
 const profileSection = document.getElementById('profileSection') as HTMLElement;
 const chatSection = document.getElementById('chatSection') as HTMLElement;
+const aiAssistantSection = document.getElementById('aiAssistantSection') as HTMLElement;
 const settingsSection = document.getElementById('settingsSection') as HTMLElement;
 
 // Chat functionality
@@ -130,7 +133,7 @@ const cancelSettingsBtn = document.getElementById('cancelSettingsBtn') as HTMLBu
 let isNavigating = false;
 let eventListenersSetup = false;
 
-type SectionType = 'game' | 'leaderboard' | 'profile' | 'chat' | 'settings' | 'welcome';
+type SectionType = 'game' | 'leaderboard' | 'profile' | 'chat' | 'ai-assistant' | 'settings' | 'welcome';
 
 // ============================================================================
 // INITIALIZATION
@@ -407,6 +410,7 @@ function setupEventListeners(): void {
     navLeaderboard?.addEventListener('click', () => showSection('leaderboard'));
     navProfile?.addEventListener('click', () => showSection('profile'));
     navChat?.addEventListener('click', () => showSection('chat'));
+    navAi?.addEventListener('click', () => showSection('ai-assistant'));
     navSettings?.addEventListener('click', () => showSection('settings'));
 
     // Language selector
@@ -1507,6 +1511,7 @@ function showSection(section: SectionType, addToHistory: boolean = true): void {
     leaderboardSection.classList.add('hidden');
     profileSection.classList.add('hidden');
     chatSection.classList.add('hidden');
+    aiAssistantSection.classList.add('hidden');
     settingsSection.classList.add('hidden');
 
     // Reset game UI
@@ -1537,6 +1542,10 @@ function showSection(section: SectionType, addToHistory: boolean = true): void {
         case 'chat':
             chatSection.classList.remove('hidden');
             loadSocialData();
+            break;
+        case 'ai-assistant':
+            aiAssistantSection.classList.remove('hidden');
+            aiAssistantPage.initialize();
             break;
         case 'settings':
             settingsSection.classList.remove('hidden');

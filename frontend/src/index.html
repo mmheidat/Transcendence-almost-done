@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pong Game</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="./css/styles.css">
+    <link rel="stylesheet" href="./ts/css/styles.css">
 </head>
 
 <body class="bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 min-h-screen overflow-hidden">
@@ -260,6 +260,16 @@
                                             d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                                     </svg>
                                     <span class="hidden lg:inline text-sm">Chat</span>
+                                </button>
+
+                                <!-- AI Assistant -->
+                                <button id="navAi"
+                                    class="nav-item flex items-center space-x-1 sm:space-x-2 px-2 sm:px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition duration-300">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                    </svg>
+                                    <span class="hidden lg:inline text-sm">AI Assistant</span>
                                 </button>
 
                                 <!-- Settings -->
@@ -1123,6 +1133,79 @@
                                     </svg>
                                     <span>Save Changes</span>
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Assistant Section -->
+                    <div id="aiAssistantSection" class="hidden">
+                        <div class="max-w-7xl mx-auto">
+                            <h2 class="text-3xl font-bold text-white mb-6">AI Assistant</h2>
+
+                            <div class="ai-layout">
+                                <!-- Sidebar with conversations -->
+                                <aside class="ai-sidebar">
+                                    <div class="p-4 border-b border-gray-700">
+                                        <button id="new-conversation"
+                                            class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-300 flex items-center justify-center space-x-2">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 4v16m8-8H4" />
+                                            </svg>
+                                            <span>New Chat</span>
+                                        </button>
+                                    </div>
+                                    <div id="conversation-list" class="p-2">
+                                        <!-- Conversations will be loaded here -->
+                                    </div>
+                                </aside>
+
+                                <!-- Main chat area -->
+                                <main class="ai-main">
+                                    <!-- Messages container -->
+                                    <div id="ai-messages" class="ai-messages-container">
+                                        <!-- Messages will be added here -->
+                                        <div class="text-gray-400 text-center py-8">
+                                            <svg class="w-16 h-16 mx-auto mb-4 text-gray-600" fill="none"
+                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                            </svg>
+                                            <p class="text-lg">Start a conversation with the AI Assistant</p>
+                                            <p class="text-sm mt-2">Ask me anything about the game or any topic!</p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Input container -->
+                                    <div class="ai-input-container">
+                                        <textarea id="ai-prompt" 
+                                            placeholder="Ask me anything..." 
+                                            rows="3"
+                                            class="ai-prompt-input"></textarea>
+                                        <div class="ai-buttons">
+                                            <button id="ai-send"
+                                                class="ai-send-btn">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                                </svg>
+                                                Send
+                                            </button>
+                                            <button id="ai-stop" class="ai-stop-btn hidden">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor"
+                                                    viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
+                                                </svg>
+                                                Stop
+                                            </button>
+                                        </div>
+                                    </div>
+                                </main>
                             </div>
                         </div>
                     </div>

@@ -1,0 +1,65 @@
+Backend framework:
+The backend is a Node.js microservice architecture using Fastify in each service (auth-service, user-service, game-service, chat-service), fronted by an Nginx API gateway. The frontend is a separate Vite + TypeScript app.
+
+Database:
+The project uses Prisma as the ORM with a SQLite database. The shared Prisma schema is under services/shared/prisma/schema.prisma and DATABASE_URL points to a file-based SQLite database (file:/app/data/pong.db). Redis is used for pub/sub and messaging between services, not as the main database.
+
+Auth method:
+Authentication is primarily JWT-based using the @fastify/jwt plugin across services. The auth-service also implements Google OAuth2 login and two-factor authentication, and the user-service exposes an API key based public API. There is no classic server-side session store.
+
+WebSockets:
+Yes, WebSockets are in use. The chat-service uses the @fastify/websocket plugin and exposes a WebSocket endpoint under the chat API, with messages broadcast via Redis pub/sub to connected clients.
+
+Folder tree:
+Transcendence-almost-done/
+- .git/
+- Makefile
+- docker-compose.yml
+- project_overview.txt
+- restore.sh
+- backend_legacy/
+	- Dockerfile
+	- package.json
+	- tsconfig.json
+	- data/
+	- prisma/
+	- src/
+- backups/
+- data/
+- frontend/
+	- Dockerfile
+	- docker-compose.yml
+	- package.json
+	- postcss.config.js
+	- src/
+	- tailwind.config.js
+	- tsconfig.json
+	- vite.config.ts
+- nginx/
+	- Dockerfile
+	- generate-certs.sh
+	- nginx.conf
+	- ssl/
+- services/
+	- auth-service/
+		- Dockerfile
+		- package.json
+		- prisma/
+		- src/
+	- user-service/
+		- Dockerfile
+		- package.json
+		- prisma/
+		- src/
+	- game-service/
+		- Dockerfile
+		- package.json
+		- prisma/
+		- src/
+	- chat-service/
+		- Dockerfile
+		- package.json
+		- src/
+	- shared/
+		- lib/
+		- prisma/
