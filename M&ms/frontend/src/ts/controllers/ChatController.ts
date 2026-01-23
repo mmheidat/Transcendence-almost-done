@@ -21,7 +21,7 @@ export class ChatController {
     private friendOptionsMenu: HTMLElement | null;
 
     // Callbacks
-    private onShowSection: ((section: string) => void) | null = null;
+    private onShowSection: ((section: string, userId?: number) => void) | null = null;
 
     constructor() {
         this.gameSocketService = GameSocketService.getInstance();
@@ -35,7 +35,7 @@ export class ChatController {
         this.friendOptionsMenu = document.getElementById('friendOptionsMenu');
     }
 
-    setOnShowSection(callback: (section: string) => void): void {
+    setOnShowSection(callback: (section: string, userId?: number) => void): void {
         this.onShowSection = callback;
     }
 
@@ -58,7 +58,12 @@ export class ChatController {
         });
 
         document.getElementById('viewProfileBtn')?.addEventListener('click', () => {
-            this.onShowSection?.('profile');
+            // Pass the friend's userId to show their profile, not ours
+            if (this.currentChatUserId) {
+                this.onShowSection?.('profile', this.currentChatUserId);
+            } else {
+                this.onShowSection?.('profile');
+            }
         });
 
         document.getElementById('inviteToGameBtn')?.addEventListener('click', async () => {

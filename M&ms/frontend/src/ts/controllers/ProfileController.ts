@@ -12,20 +12,22 @@ export class ProfileController {
         this.profileService = ProfileService.getInstance();
     }
 
-    async loadProfileData(): Promise<void> {
-        const user = this.authService.getCurrentUser();
-        if (!user) return;
+    async loadProfileData(userId?: number): Promise<void> {
+        const currentUser = this.authService.getCurrentUser();
+        // Use provided userId or fall back to current user's ID
+        const targetUserId = userId ?? currentUser?.id;
+        if (!targetUserId) return;
 
         try {
             const [userProfile, stats, matchHistory] = await Promise.all([
-                this.profileService.fetchUserProfile(user.id),
-                this.profileService.fetchUserStats(user.id),
-                this.profileService.fetchMatchHistory(10)
+                this.profileService.fetchUserProfile(targetUserId),
+                this.profileService.fetchUserStats(targetUserId),
+                this.profileService.fetchMatchHistory(10, targetUserId)
             ]);
 
             this.updateProfileHeader(userProfile);
             this.updateStats(stats);
-            this.updateMatchHistory(matchHistory, user.id);
+            this.updateMatchHistory(matchHistory, targetUserId);
         } catch (error) {
             console.error('Failed to load profile data:', error);
             this.handleProfileLoadError();

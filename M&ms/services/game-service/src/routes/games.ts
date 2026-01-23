@@ -84,11 +84,14 @@ const gameRoutes: FastifyPluginAsync = async (fastify) => {
     // Get game history
     fastify.get('/history', { preHandler: [authenticate] }, async (request, reply) => {
         const user = request.user as JwtPayload;
-        const { limit = 10 } = request.query as { limit?: number };
+        const { limit = 10, userId } = request.query as { limit?: number; userId?: string };
+
+        // Use provided userId or fall back to current user's ID
+        const targetUserId = userId ? parseInt(userId) : user.id;
 
         const games = await prisma.game.findMany({
             where: {
-                OR: [{ player1Id: user.id }, { player2Id: user.id }]
+                OR: [{ player1Id: targetUserId }, { player2Id: targetUserId }]
             },
             include: {
                 player1: { select: { id: true, username: true, displayName: true } },

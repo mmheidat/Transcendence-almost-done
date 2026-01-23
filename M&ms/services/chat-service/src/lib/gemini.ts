@@ -49,7 +49,7 @@ export async function* generateContentStream(
 
     // Build conversation context
     const contents = [];
-    
+
     if (conversationHistory && conversationHistory.length > 0) {
         for (const msg of conversationHistory) {
             contents.push({
@@ -58,7 +58,7 @@ export async function* generateContentStream(
             });
         }
     }
-    
+
     // Add current prompt
     contents.push({
         role: 'user',

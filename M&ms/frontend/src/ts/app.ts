@@ -50,6 +50,7 @@ const navSettings = document.getElementById('navSettings') as HTMLButtonElement;
 const navLogout = document.getElementById('navLogout') as HTMLButtonElement;
 
 let eventListenersSetup = false;
+let profileUserIdToView: number | undefined = undefined;
 
 // ============================================================================
 // INITIALIZATION
@@ -180,12 +181,12 @@ function setupEventListeners(): void {
     // Footer links
     const footerPrivacyLink = document.getElementById('footerPrivacyLink');
     const footerTermsLink = document.getElementById('footerTermsLink');
-    
+
     footerPrivacyLink?.addEventListener('click', (e: Event) => {
         e.preventDefault();
         navigationController.showSection('privacy-policy');
     });
-    
+
     footerTermsLink?.addEventListener('click', (e: Event) => {
         e.preventDefault();
         navigationController.showSection('terms-of-service');
@@ -231,7 +232,8 @@ function setupEventListeners(): void {
                 setTimeout(() => leaderboardController.loadLeaderboard(), 1000);
                 break;
             case 'profile':
-                profileController.loadProfileData();
+                profileController.loadProfileData(profileUserIdToView);
+                profileUserIdToView = undefined; // Reset after use
                 break;
             case 'chat':
                 chatController.loadSocialData();
@@ -252,8 +254,10 @@ function setupEventListeners(): void {
     // Tournament controller
     tournamentController.setupEventListeners();
 
-    // Chat controller
-    chatController.setOnShowSection((section) => navigationController.showSection(section as SectionType));
+    chatController.setOnShowSection((section, userId) => {
+        profileUserIdToView = userId; // Store the userId to view
+        navigationController.showSection(section as SectionType);
+    });
     chatController.setupEventListeners();
 
     // Settings controller

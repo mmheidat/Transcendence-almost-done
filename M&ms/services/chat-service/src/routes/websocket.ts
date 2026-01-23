@@ -20,7 +20,7 @@ function checkRateLimit(userId: number): { allowed: boolean; retryAfter?: number
     const windowMs = parseInt(process.env.AI_RATE_LIMIT_WINDOW || '300000');
 
     const state = rateLimitState.get(key);
-    
+
     if (!state || now > state.resetAt) {
         rateLimitState.set(key, { count: 1, resetAt: now + windowMs });
         return { allowed: true };
@@ -91,6 +91,31 @@ const wsHandler: FastifyPluginAsync = async (fastify) => {
                             console.error('❌ Error handling aiCancel:', err);
                         }
                         break;
+                    case 'game_invite':
+                        console.log(`🎮 Processing game_invite from user ${userId} to ${message.to_user_id}`);
+                        handleGameInvite(connection.socket as WebSocket, userId, message);
+                        break;
+                    case 'game_invite_accept':
+                        console.log(`🎮 Processing game_invite_accept from user ${userId}`);
+                        handleGameInviteAccept(connection.socket as WebSocket, userId, message);
+                        break;
+                    case 'game_invite_decline':
+                        console.log(`🎮 Processing game_invite_decline from user ${userId}`);
+                        handleGameInviteDecline(connection.socket as WebSocket, userId, message);
+                        break;
+                    case 'game_paddle_update':
+                        handleGamePaddleUpdate(userId, message);
+                        break;
+                    case 'game_state':
+                        handleGameState(userId, message);
+                        break;
+                    case 'game_end':
+                        handleGameEnd(userId, message);
+                        break;
+                    case 'ping':
+                        // Silent ping/pong for keepalive
+                        connection.socket.send(JSON.stringify({ type: 'pong' }));
+                        break;
                     default:
                         console.log('⚠️ Unknown message type:', message.type);
                 }
@@ -109,7 +134,7 @@ const wsHandler: FastifyPluginAsync = async (fastify) => {
                 controller.abort();
                 activeStreams.delete(streamKey);
             }
-            
+
             clients.get(userId)?.delete(connection.socket as WebSocket);
             if (clients.get(userId)?.size === 0) {
                 clients.delete(userId);
@@ -178,7 +203,7 @@ async function handleAiPrompt(connection: WebSocket, userId: number, message: an
         }
 
         // Prepare conversation history (reverse since we fetched DESC)
-        const history = conversation.messages.reverse().map(msg  => ({
+        const history = conversation.messages.reverse().map(msg => ({
             role: msg.role,
             content: msg.content
         }));
@@ -211,7 +236,7 @@ async function handleAiPrompt(connection: WebSocket, userId: number, message: an
                     chunkCount++;
                     fullResponse += chunk.text;
                     console.log(`📤 Chunk ${chunkCount}: ${chunk.text.length} chars`);
-                    
+
                     // Send full chunks immediately for faster streaming
                     connection.send(JSON.stringify({
                         type: 'aiDelta',
@@ -222,10 +247,10 @@ async function handleAiPrompt(connection: WebSocket, userId: number, message: an
 
                 if (chunk.done) {
                     console.log(`✅ Stream complete! Total chunks: ${chunkCount}, Total length: ${fullResponse.length}`);
-                    
+
                     // Wait for user message to be saved before saving assistant message
                     await userMessagePromise;
-                    
+
                     // Save assistant message
                     const assistantMessage = await prisma.aiMessage.create({
                         data: {
@@ -253,7 +278,7 @@ async function handleAiPrompt(connection: WebSocket, userId: number, message: an
             }
         } catch (error: any) {
             console.error('AI streaming error:', error);
-            
+
             if (error instanceof GeminiError) {
                 sendWsError(connection, conversation.id, error.userMessage, error.code);
             } else {
@@ -272,7 +297,7 @@ async function handleAiPrompt(connection: WebSocket, userId: number, message: an
 async function handleAiCancel(userId: number, message: any) {
     const streamKey = `${userId}`;
     const controller = activeStreams.get(streamKey);
-    
+
     if (controller) {
         controller.abort();
         activeStreams.delete(streamKey);
@@ -295,6 +320,292 @@ function sendWsError(
         code,
         retryAfter
     }));
+}
+
+// Store pending game invites
+const pendingInvites = new Map<string, { fromUserId: number; toUserId: number; fromUsername: string; createdAt: Date }>();
+
+// Game Invite Handler - send invite to target user
+async function handleGameInvite(connection: WebSocket, fromUserId: number, message: any) {
+    const { to_user_id } = message;
+
+    if (!to_user_id) {
+        connection.send(JSON.stringify({
+            type: 'game_invite_error',
+            error: 'No target user specified'
+        }));
+        return;
+    }
+
+    // Get sender's username
+    const sender = await prisma.user.findUnique({
+        where: { id: fromUserId },
+        select: { username: true, displayName: true }
+    });
+
+    const fromUsername = sender?.displayName || sender?.username || 'Unknown';
+
+    // Generate unique invite ID
+    const inviteId = `invite_${fromUserId}_${to_user_id}_${Date.now()}`;
+
+    // Store invite
+    pendingInvites.set(inviteId, {
+        fromUserId,
+        toUserId: to_user_id,
+        fromUsername,
+        createdAt: new Date()
+    });
+
+    // Expire invite after 60 seconds
+    setTimeout(() => {
+        if (pendingInvites.has(inviteId)) {
+            pendingInvites.delete(inviteId);
+            // Notify sender that invite expired
+            const senderConnections = clients.get(fromUserId);
+            if (senderConnections) {
+                for (const client of senderConnections) {
+                    client.send(JSON.stringify({ type: 'game_invite_expired', invite_id: inviteId }));
+                }
+            }
+        }
+    }, 60000);
+
+    // Send to target user if they're connected
+    const targetConnections = clients.get(to_user_id);
+    if (targetConnections && targetConnections.size > 0) {
+        for (const client of targetConnections) {
+            client.send(JSON.stringify({
+                type: 'game_invite',
+                invite: {
+                    id: inviteId,
+                    from_user_id: fromUserId,
+                    from_username: fromUsername,
+                    to_user_id,
+                    created_at: new Date().toISOString()
+                }
+            }));
+        }
+        // Confirm to sender
+        connection.send(JSON.stringify({ type: 'game_invite_sent', invite_id: inviteId }));
+        console.log(`🎮 Game invite sent from ${fromUserId} to ${to_user_id}`);
+    } else {
+        connection.send(JSON.stringify({
+            type: 'game_invite_error',
+            error: 'User is not online'
+        }));
+    }
+}
+
+// Game Invite Accept Handler
+async function handleGameInviteAccept(connection: WebSocket, userId: number, message: any) {
+    const { invite_id } = message;
+
+    const invite = pendingInvites.get(invite_id);
+    if (!invite) {
+        connection.send(JSON.stringify({ type: 'game_invite_error', error: 'Invite not found or expired' }));
+        return;
+    }
+
+    // Verify this user is the target
+    if (invite.toUserId !== userId) {
+        connection.send(JSON.stringify({ type: 'game_invite_error', error: 'Invalid invite' }));
+        return;
+    }
+
+    // Remove the invite
+    pendingInvites.delete(invite_id);
+
+    // Generate game ID
+    const gameId = `game_${invite.fromUserId}_${userId}_${Date.now()}`;
+
+    // Create game record in DB
+    const dbGame = await prisma.game.create({
+        data: {
+            player1Id: invite.fromUserId,
+            player2Id: userId,
+            gameMode: 'online'
+        }
+    });
+
+    // Notify both users
+    const gameStartMessage = {
+        type: 'game_invite_accepted',
+        game_id: gameId,
+        db_game_id: dbGame.id,
+        opponent_id: 0, // Will be set per-user below
+        is_host: false
+    };
+
+    // Notify original inviter (they are host)
+    const inviterConnections = clients.get(invite.fromUserId);
+    if (inviterConnections) {
+        for (const client of inviterConnections) {
+            client.send(JSON.stringify({
+                ...gameStartMessage,
+                opponent_id: userId,
+                is_host: true
+            }));
+        }
+    }
+
+    // Notify accepter (they are guest)
+    connection.send(JSON.stringify({
+        ...gameStartMessage,
+        opponent_id: invite.fromUserId,
+        is_host: false
+    }));
+
+    // Register as active game with DB ID
+    registerActiveGame(gameId, invite.fromUserId, userId, dbGame.id);
+
+    console.log(`🎮 Game started: ${invite.fromUserId} vs ${userId} (DB ID: ${dbGame.id})`);
+}
+
+// Game Invite Decline Handler
+function handleGameInviteDecline(connection: WebSocket, userId: number, message: any) {
+    const { invite_id } = message;
+
+    const invite = pendingInvites.get(invite_id);
+    if (!invite) {
+        return; // Silently ignore if invite not found
+    }
+
+    // Verify this user is the target
+    if (invite.toUserId !== userId) {
+        return;
+    }
+
+    // Remove the invite
+    pendingInvites.delete(invite_id);
+
+    // Notify the original inviter
+    const inviterConnections = clients.get(invite.fromUserId);
+    if (inviterConnections) {
+        for (const client of inviterConnections) {
+            client.send(JSON.stringify({ type: 'game_invite_declined', invite_id }));
+        }
+    }
+
+    console.log(`🎮 Game invite ${invite_id} declined by user ${userId}`);
+}
+
+// Active games: gameId -> { player1: userId, player2: userId, dbGameId: number }
+const activeGames = new Map<string, { player1: number; player2: number; dbGameId: number }>();
+
+// Helper to get opponent in a game
+function getOpponentId(gameId: string, userId: number): number | null {
+    const game = activeGames.get(gameId);
+    if (!game) return null;
+    if (game.player1 === userId) return game.player2;
+    if (game.player2 === userId) return game.player1;
+    return null;
+}
+
+// Helper to send to opponent
+function sendToOpponent(gameId: string, userId: number, message: object): void {
+    const opponentId = getOpponentId(gameId, userId);
+    if (!opponentId) return;
+
+    const opponentConnections = clients.get(opponentId);
+    if (opponentConnections) {
+        for (const client of opponentConnections) {
+            client.send(JSON.stringify(message));
+        }
+    }
+}
+
+// Register a new active game
+function registerActiveGame(gameId: string, player1: number, player2: number, dbGameId?: number): void {
+    activeGames.set(gameId, { player1, player2, dbGameId: dbGameId || 0 });
+    console.log(`🎮 Active game registered: ${gameId} (${player1} vs ${player2}, DB ID: ${dbGameId || 'unknown'})`);
+}
+
+// Game Paddle Update Handler - forward paddle position to opponent
+function handleGamePaddleUpdate(userId: number, message: any): void {
+    const { game_id, paddle_y } = message;
+    if (!game_id) return;
+
+    // If game not registered yet, try to register it from the game_id
+    if (!activeGames.has(game_id)) {
+        // Parse game ID: game_{player1}_{player2}_{timestamp}
+        const parts = game_id.split('_');
+        if (parts.length >= 3) {
+            const player1 = parseInt(parts[1]);
+            const player2 = parseInt(parts[2]);
+            if (!isNaN(player1) && !isNaN(player2)) {
+                registerActiveGame(game_id, player1, player2);
+            }
+        }
+    }
+
+    sendToOpponent(game_id, userId, {
+        type: 'game_paddle_update',
+        game_id,
+        paddle_y
+    });
+}
+
+// Game State Handler - forward full game state to opponent (host -> guest)
+function handleGameState(userId: number, message: any): void {
+    const { game_id, state } = message;
+    if (!game_id || !state) return;
+
+    // If game not registered yet, try to register it from the game_id
+    if (!activeGames.has(game_id)) {
+        const parts = game_id.split('_');
+        if (parts.length >= 3) {
+            const player1 = parseInt(parts[1]);
+            const player2 = parseInt(parts[2]);
+            if (!isNaN(player1) && !isNaN(player2)) {
+                registerActiveGame(game_id, player1, player2);
+            }
+        }
+    }
+
+    sendToOpponent(game_id, userId, {
+        type: 'game_state',
+        game_id,
+        state
+    });
+}
+
+// Game End Handler - forward game end notification and update DB
+async function handleGameEnd(userId: number, message: any): Promise<void> {
+    const { game_id, winner_id, left_score, right_score } = message;
+    if (!game_id) return;
+
+    const game = activeGames.get(game_id);
+    if (!game) return;
+
+    // Notify opponent
+    sendToOpponent(game_id, userId, {
+        type: 'game_ended',
+        game_id,
+        winner_id,
+        left_score,
+        right_score
+    });
+
+    // Update database with scores and winner
+    if (game.dbGameId) {
+        try {
+            await prisma.game.update({
+                where: { id: game.dbGameId },
+                data: {
+                    player1Score: left_score,
+                    player2Score: right_score,
+                    winnerId: winner_id
+                }
+            });
+            console.log(`🎮 Game ${game_id} (DB: ${game.dbGameId}) updated: ${left_score}-${right_score}, Winner: ${winner_id}`);
+        } catch (err) {
+            console.error(`❌ Failed to update game ${game.dbGameId} in DB:`, err);
+        }
+    }
+
+    // Remove active game
+    activeGames.delete(game_id);
+    console.log(`🎮 Game ${game_id} ended.`);
 }
 
 // Subscribe to Redis for chat messages

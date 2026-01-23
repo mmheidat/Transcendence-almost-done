@@ -113,13 +113,25 @@ export class NavigationController {
                 break;
             case 'privacy-policy':
                 this.privacyPolicySection?.classList.remove('hidden');
+                // Scroll to top when showing privacy policy
+                window.scrollTo(0, 0);
                 break;
             case 'terms-of-service':
                 this.termsOfServiceSection?.classList.remove('hidden');
+                // Scroll to top when showing terms of service
+                window.scrollTo(0, 0);
                 break;
             case 'welcome':
                 this.welcomeSection?.classList.remove('hidden');
                 break;
+        }
+
+        // Hide contentArea for privacy/terms pages to remove the gap
+        const contentArea = document.getElementById('contentArea');
+        if (section === 'privacy-policy' || section === 'terms-of-service') {
+            contentArea?.classList.add('hidden');
+        } else {
+            contentArea?.classList.remove('hidden');
         }
 
         // Notify callback for section-specific loading

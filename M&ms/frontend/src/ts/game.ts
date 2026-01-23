@@ -1,7 +1,7 @@
 import Paddle from './paddle';
 import Ball from './ball';
 
-type GameMode = 'ai' | '1v1' | '2v2' | 'online';
+type GameMode = 'ai' | '1v1' | '2v2' | 'online' | 'tournament';
 
 class Game {
     canvas: HTMLCanvasElement;
@@ -170,6 +170,11 @@ class Game {
                 this.canvas.height / 2,
                 10
             );
+        }
+
+        // Enable fire effect for tournament mode
+        if (this.ball && this.gameMode === 'tournament') {
+            this.ball.isTournament = true;
         }
     }
 
@@ -430,6 +435,9 @@ class Game {
     start(): void {
         this.setup();
         this.gameRunning = true;
+        // Lock scrolling during gameplay
+        document.body.classList.add('game-active');
+        document.documentElement.classList.add('game-active');
         this.gameLoop();
     }
 
@@ -439,6 +447,10 @@ class Game {
             cancelAnimationFrame(this.animationId);
             this.animationId = null;
         }
+
+        // Unlock scrolling when game stops
+        document.body.classList.remove('game-active');
+        document.documentElement.classList.remove('game-active');
 
         // Clean up ALL overlays
         document.getElementById('pauseOverlay')?.remove();
@@ -466,6 +478,11 @@ class Game {
     private handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
             this.togglePause();
+        }
+        // Prevent arrow keys and game control keys from scrolling the page
+        const gameKeys = ['ArrowUp', 'ArrowDown', 'w', 'W', 's', 'S', 'q', 'Q', 'a', 'A', 'o', 'O', 'l', 'L'];
+        if (gameKeys.includes(e.key) && this.gameRunning) {
+            e.preventDefault();
         }
         this.keys[e.key] = true;
     };

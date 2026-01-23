@@ -102,8 +102,12 @@ export class ProfileService {
     }
 
     // Fetch match history
-    async fetchMatchHistory(limit: number = 10): Promise<GameHistory[]> {
-        const response = await fetch(`${API_BASE_URL}/game/history?limit=${limit}`, {
+    async fetchMatchHistory(limit: number = 10, userId?: number): Promise<GameHistory[]> {
+        let url = `${API_BASE_URL}/game/history?limit=${limit}`;
+        if (userId) {
+            url += `&userId=${userId}`;
+        }
+        const response = await fetch(url, {
             headers: this.getAuthHeaders()
         });
 

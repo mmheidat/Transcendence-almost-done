@@ -156,7 +156,7 @@ export class TournamentController {
         if (this.gameMode) this.gameMode.textContent = `Tournament Match ${this.tournament.currentMatch + 1}`;
         if (this.gameDifficulty) this.gameDifficulty.textContent = `${player1Name} vs ${player2Name}`;
 
-        this.currentGame = new Game('gameCanvas', '1v1', 'medium', (winner) => {
+        this.currentGame = new Game('gameCanvas', 'tournament', 'medium', (winner) => {
             this.onTournamentMatchEnd(winner, player1Name, player2Name);
         });
         this.currentGame.start();
