@@ -136,17 +136,3 @@ services:
     depends_on:
       - redis
     restart: unless-stopped
-
-  # Backup Service
-  backup-service:
-    build:
-      context: ./services/backup-service
-      dockerfile: Dockerfile
-    container_name: pong-backup
-    volumes:
-      - ./data:/app/data
-      - ./backups:/app/backups
-    environment:
-      - BACKUP_INTERVAL=3600
-      - MAX_BACKUPS=48
-    restart: unless-stopped

@@ -55,6 +55,27 @@ export class PongEngine {
         const aspectRatio = 800 / 400;
         this.canvas.width = maxWidth;
         this.canvas.height = maxWidth / aspectRatio;
+
+        // Reposition paddles based on new width
+        const paddleWidth = 10;
+        const paddleOffset = 10;
+        const paddleHeight = 80;
+
+        // Determine Y position if paddles exist, otherwise keep default center or calculated
+        // Actually, better to just update X, keeping Y relative or same. 
+        // Since height changes, we should scale Y too or centering might break?
+        // Let's just re-anchor X for now as that's the reported bug.
+
+        if (this.rightPaddle) {
+            this.rightPaddle.x = this.canvas.width - paddleOffset - paddleWidth;
+        }
+
+        // 2v2 Mode - Right side paddles
+        if (this.gameMode === '2v2') {
+            if (this.rightPaddle2) {
+                this.rightPaddle2.x = this.canvas.width - paddleOffset - paddleWidth;
+            }
+        }
     }
 
     handleAI(): void {
