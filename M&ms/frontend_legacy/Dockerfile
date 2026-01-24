@@ -1,13 +1,24 @@
+# Use Node.js LTS version
 FROM node:22-alpine
+
+# Set working directory
 WORKDIR /app
+
+# Copy package files
 COPY package*.json ./
 COPY vite.config.ts ./
 COPY tsconfig.json ./
-COPY tsconfig.node.json ./
 COPY tailwind.config.js ./
 COPY postcss.config.js ./
+
+# Install dependencies
 RUN npm install
-COPY index.html ./
+
+# Copy source files
 COPY src ./src
+
+# Expose port 8080
 EXPOSE 8080
+
+# Start Vite dev server
 CMD ["npm", "run", "dev"]

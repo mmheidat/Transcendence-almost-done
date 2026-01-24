@@ -65,17 +65,39 @@ const gameRoutes: FastifyPluginAsync = async (fastify) => {
             winner_id?: number;
         };
 
+        const gameId = parseInt(id);
+
+        // Fetch game first to get player IDs if we need to infer winner
+        const existingGame = await prisma.game.findUnique({
+            where: { id: gameId }
+        });
+
+        if (!existingGame) {
+            return reply.code(404).send({ error: 'Game not found' });
+        }
+
+        let finalWinnerId = winner_id;
+
+        // If winner_id is not provided, infer it from scores
+        if (finalWinnerId === undefined) {
+            if (player1_score > player2_score) {
+                finalWinnerId = existingGame.player1Id;
+            } else if (player2_score > player1_score) {
+                finalWinnerId = existingGame.player2Id || undefined; // If player2 is null (AI), winner is null/undefined
+            }
+        }
+
         const game = await prisma.game.update({
-            where: { id: parseInt(id) },
+            where: { id: gameId },
             data: {
                 player1Score: player1_score,
                 player2Score: player2_score,
-                winnerId: winner_id
+                winnerId: finalWinnerId
             }
         });
 
-        if (winner_id) {
-            await publishEvent('game:ended', { gameId: game.id, winnerId: winner_id });
+        if (finalWinnerId) {
+            await publishEvent('game:ended', { gameId: game.id, winnerId: finalWinnerId });
         }
 
         return reply.send({ message: 'Score updated', game });

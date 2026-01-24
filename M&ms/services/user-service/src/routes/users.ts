@@ -4,12 +4,16 @@ import prisma from '../lib/prisma.js';
 import { authenticate, JwtPayload } from '../lib/jwt.js';
 
 const updateProfileSchema = z.object({
-    display_name: z.string().min(3).max(30).optional(),
-    avatar_url: z.string().url().optional(),
-    nationality: z.string().max(50).optional(),
-    phone: z.string().max(20).optional(),
-    gender: z.string().max(10).optional(),
-    date_of_birth: z.string().optional()
+    display_name: z.string().min(3).max(30).optional().nullable(),
+    avatar_url: z.string().optional().nullable().refine((val) => {
+        if (!val) return true;
+        // Accept either a valid URL or a data URL (base64)
+        return val.startsWith('data:') || val.startsWith('http://') || val.startsWith('https://');
+    }, { message: 'Invalid avatar URL format' }),
+    nationality: z.string().max(50).optional().nullable(),
+    phone: z.string().max(20).optional().nullable(),
+    gender: z.string().max(10).optional().nullable(),
+    date_of_birth: z.string().optional().nullable()
 });
 
 const userRoutes: FastifyPluginAsync = async (fastify) => {

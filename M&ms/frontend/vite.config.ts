@@ -1,20 +1,20 @@
 import { defineConfig } from 'vite';
-import path from 'path';
+import react from '@vitejs/plugin-react';
 
 export default defineConfig({
-  root: 'src',
-  publicDir: '../public',
-  build: {
-    outDir: '../dist',
-    emptyOutDir: true,
-  },
-  server: {
-    port: 8080,
-    host: '0.0.0.0',
-  },
-  resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
+    plugins: [react()],
+    server: {
+        port: 8080,
+        host: '0.0.0.0',
+        watch: {
+            usePolling: true,
+        },
+        proxy: {
+            '/api': {
+                target: 'https://localhost:8443',
+                changeOrigin: true,
+                secure: false, // Allow self-signed certificates
+            },
+        },
     },
-  },
 });

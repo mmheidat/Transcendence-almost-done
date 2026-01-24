@@ -112,6 +112,15 @@ const wsHandler: FastifyPluginAsync = async (fastify) => {
                     case 'game_end':
                         handleGameEnd(userId, message);
                         break;
+                    case 'game_pause':
+                        handleGamePause(userId, message);
+                        break;
+                    case 'game_resume':
+                        handleGameResume(userId, message);
+                        break;
+                    case 'game_leave':
+                        handleGameLeave(userId, message);
+                        break;
                     case 'ping':
                         // Silent ping/pong for keepalive
                         connection.socket.send(JSON.stringify({ type: 'pong' }));
@@ -138,6 +147,15 @@ const wsHandler: FastifyPluginAsync = async (fastify) => {
             clients.get(userId)?.delete(connection.socket as WebSocket);
             if (clients.get(userId)?.size === 0) {
                 clients.delete(userId);
+
+                // Check if user was in an active game and forfeit it
+                // We need to find if this user is in any active game
+                for (const [gameId, game] of activeGames.entries()) {
+                    if (game.player1 === userId || game.player2 === userId) {
+                        console.log(`User ${userId} disconnected during game ${gameId} - triggering forfeit`);
+                        handleGameForfeit(userId, gameId, game);
+                    }
+                }
             }
         });
     });
@@ -571,17 +589,24 @@ function handleGameState(userId: number, message: any): void {
 
 // Game End Handler - forward game end notification and update DB
 async function handleGameEnd(userId: number, message: any): Promise<void> {
-    const { game_id, winner_id, left_score, right_score } = message;
+    const { game_id, winner_id, winner_side, left_score, right_score } = message;
     if (!game_id) return;
 
     const game = activeGames.get(game_id);
     if (!game) return;
 
+    // Determine winner ID if only side is provided
+    let finalWinnerId = winner_id;
+    if (!finalWinnerId && winner_side) {
+        if (winner_side === 'left') finalWinnerId = game.player1;
+        else if (winner_side === 'right') finalWinnerId = game.player2;
+    }
+
     // Notify opponent
     sendToOpponent(game_id, userId, {
         type: 'game_ended',
         game_id,
-        winner_id,
+        winner_id: finalWinnerId,
         left_score,
         right_score
     });
@@ -603,9 +628,69 @@ async function handleGameEnd(userId: number, message: any): Promise<void> {
         }
     }
 
-    // Remove active game
     activeGames.delete(game_id);
     console.log(`🎮 Game ${game_id} ended.`);
+}
+
+// Game Pause Handler
+function handleGamePause(userId: number, message: any): void {
+    const { game_id } = message;
+    if (!game_id) return;
+    sendToOpponent(game_id, userId, { type: 'game_paused', game_id });
+}
+
+// Game Resume Handler
+function handleGameResume(userId: number, message: any): void {
+    const { game_id } = message;
+    if (!game_id) return;
+    sendToOpponent(game_id, userId, { type: 'game_resumed', game_id });
+}
+
+// Handle explicit game leave
+async function handleGameLeave(userId: number, message: any): Promise<void> {
+    const { game_id } = message;
+    if (!game_id) return;
+
+    const game = activeGames.get(game_id);
+    if (!game) return;
+
+    await handleGameForfeit(userId, game_id, game);
+}
+
+// Centralized forfeit logic (used for explicit leave and disconnection)
+async function handleGameForfeit(leaverId: number, gameId: string, game: { player1: number; player2: number; dbGameId: number }): Promise<void> {
+    const winnerId = game.player1 === leaverId ? game.player2 : game.player1;
+
+    // Determine scores (Leaver gets 0, Winner gets 11)
+    const player1Score = game.player1 === leaverId ? 0 : 11;
+    const player2Score = game.player2 === leaverId ? 0 : 11;
+
+    // Notify opponent
+    sendToOpponent(gameId, leaverId, {
+        type: 'game_opponent_left',
+        game_id: gameId,
+        winner_id: winnerId
+    });
+
+    // Update DB
+    if (game.dbGameId) {
+        try {
+            await prisma.game.update({
+                where: { id: game.dbGameId },
+                data: {
+                    player1Score: player1Score,
+                    player2Score: player2Score,
+                    winnerId: winnerId
+                }
+            });
+            console.log(`🎮 Game ${gameId} forfeited by ${leaverId}. Winner: ${winnerId}`);
+        } catch (err) {
+            console.error(`❌ Failed to update game ${game.dbGameId} forfeit:`, err);
+        }
+    }
+
+    // Close game
+    activeGames.delete(gameId);
 }
 
 // Subscribe to Redis for chat messages
