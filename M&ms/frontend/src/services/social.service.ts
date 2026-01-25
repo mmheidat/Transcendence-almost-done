@@ -11,7 +11,7 @@ export interface Friend {
 
 export interface FriendRequest {
     id: number;
-    from_user: {
+    from: {
         id: number;
         username: string;
         display_name: string;

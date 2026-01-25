@@ -1,23 +1,30 @@
 import React, { useEffect, useState } from 'react';
 import { Trophy, Gamepad2, Flame, Settings } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import { userService, UserProfile, UserStats, GameHistory } from '../services/user.service';
 import { useAuth } from '../context/AuthContext';
 
 const Profile: React.FC = () => {
     const { user } = useAuth();
+    const location = useLocation();
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [stats, setStats] = useState<UserStats | null>(null);
     const [history, setHistory] = useState<GameHistory[]>([]);
     const [loading, setLoading] = useState(true);
 
+    // Determines which user ID to fetch: passed via navigation state or current user
+    // @ts-ignore
+    const targetUserId = location.state?.userId || user?.id;
+    const isOwnProfile = targetUserId === user?.id;
+
     useEffect(() => {
         const fetchData = async () => {
-            if (!user) return;
+            if (!targetUserId) return;
             try {
                 const [userProfile, userStats, userHistory] = await Promise.all([
-                    userService.fetchUserProfile(user.id),
-                    userService.fetchUserStats(user.id),
-                    userService.fetchMatchHistory(10, user.id)
+                    userService.fetchUserProfile(targetUserId),
+                    userService.fetchUserStats(targetUserId),
+                    userService.fetchMatchHistory(10, targetUserId)
                 ]);
                 setProfile(userProfile);
                 setStats(userStats);
@@ -30,7 +37,7 @@ const Profile: React.FC = () => {
         };
 
         fetchData();
-    }, [user]);
+    }, [targetUserId]);
 
     if (loading) return <div className="text-center p-10">Loading...</div>;
     if (!profile || !stats) return <div className="text-center p-10">Failed to load profile</div>;
@@ -56,9 +63,11 @@ const Profile: React.FC = () => {
                                 <p className="text-gray-500 text-sm mt-1">Member since: {new Date(profile.created_at).toLocaleDateString()}</p>
                             </div>
                         </div>
-                        <a href="/settings" className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition border border-gray-600 flex items-center">
-                            <Settings size={18} className="mr-2" /> Edit Profile
-                        </a>
+                        {isOwnProfile && (
+                            <a href="/settings" className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition border border-gray-600 flex items-center">
+                                <Settings size={18} className="mr-2" /> Edit Profile
+                            </a>
+                        )}
                     </div>
                 </div>
 
