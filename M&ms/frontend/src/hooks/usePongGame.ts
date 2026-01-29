@@ -251,6 +251,9 @@ export const usePongGame = (
     const startGame = useCallback(() => {
         if (!engineRef.current) initGame();
 
+        // Reset time reference to prevent large delta on restart
+        lastTimeRef.current = 0;
+
         isPlayingRef.current = true;
         isPausedRef.current = false;
 

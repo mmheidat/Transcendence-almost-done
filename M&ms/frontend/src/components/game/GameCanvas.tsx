@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { usePongGame } from '../../hooks/usePongGame';
+import { useAuth } from '../../context/AuthContext';
 import { GameMode } from '../../game/PongEngine';
 import { Play, RotateCcw, Menu, LogOut, AlertTriangle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -17,6 +18,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ mode, difficulty = 'medium', on
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const navigate = useNavigate();
     const { gameState, startGame, pauseGame, resetGame, initGame } = usePongGame(canvasRef, mode, difficulty, onGameEnd, onlineConfig);
+    const { user } = useAuth();
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
     const [isLeaving, setIsLeaving] = useState(false);
 
@@ -199,7 +201,7 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ mode, difficulty = 'medium', on
                 <div className="flex items-center space-x-2">
                     <span className="bg-gray-700 px-2 py-1 rounded text-xs text-white">W</span>
                     <span className="bg-gray-700 px-2 py-1 rounded text-xs text-white">S</span>
-                    <span>{onlineConfig?.player1Name || "Player 1"}</span>
+                    <span>{onlineConfig?.player1Name || user?.display_name || user?.username || "Player 1"}</span>
                 </div>
 
                 {mode !== 'ai' && (
