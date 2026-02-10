@@ -22,6 +22,32 @@ const GameCanvas: React.FC<GameCanvasProps> = ({ mode, difficulty = 'medium', on
     const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
     const [isLeaving, setIsLeaving] = useState(false);
 
+    // Track whether we're in an active online game (ref avoids stale closures)
+    const isOnlineGameActiveRef = useRef(false);
+    useEffect(() => {
+        isOnlineGameActiveRef.current = mode === 'online' && onlineConfig != null && gameState.isPlaying && !gameState.winner;
+    }, [mode, onlineConfig, gameState.isPlaying, gameState.winner]);
+
+    // Send game_leave on tab close or component unmount during active online game
+    useEffect(() => {
+        if (mode !== 'online' || !onlineConfig) return;
+
+        const handleBeforeUnload = () => {
+            if (isOnlineGameActiveRef.current) {
+                wsClient.sendGameLeave(onlineConfig.gameId);
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+            // Also send leave on React navigation (component unmount)
+            if (isOnlineGameActiveRef.current) {
+                wsClient.sendGameLeave(onlineConfig.gameId);
+            }
+        };
+    }, [mode, onlineConfig]);
+
     // Initial setup
     useEffect(() => {
         initGame();

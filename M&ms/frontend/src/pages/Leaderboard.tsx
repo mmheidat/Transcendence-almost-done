@@ -106,7 +106,7 @@ const Leaderboard: React.FC = () => {
                                             <div className="absolute -inset-1.5 rounded-full bg-gradient-to-br from-gray-300/60 via-gray-400/40 to-gray-500/60 blur-sm"></div>
                                             <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-gray-300/60 shadow-[inset_0_2px_10px_rgba(255,255,255,0.15)]">
                                                 {isValidAvatarUrl(getPlayer(1).avatar) ? (
-                                                    <img src={getPlayer(1).avatar} className="w-full h-full object-cover" alt={getPlayer(1).username} />
+                                                    <img src={getPlayer(1).avatar} className="w-full h-full object-cover" alt={getPlayer(1).username} referrerPolicy="no-referrer" />
                                                 ) : (
                                                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-700/90 to-gray-900/90 backdrop-blur-sm">
                                                         <span className="text-3xl text-gray-200 font-bold drop-shadow-lg">{getPlayer(1).username.charAt(0).toUpperCase()}</span>
@@ -159,7 +159,7 @@ const Leaderboard: React.FC = () => {
                                             <div className="absolute -inset-2 rounded-full bg-gradient-to-br from-yellow-400/70 via-amber-500/50 to-yellow-600/70 blur-md animate-pulse" style={{ animationDuration: '2s' }}></div>
                                             <div className="relative w-24 h-24 rounded-full overflow-hidden border-3 border-yellow-400/70 shadow-[inset_0_2px_15px_rgba(255,255,255,0.2),0_0_30px_rgba(234,179,8,0.4)]">
                                                 {isValidAvatarUrl(getPlayer(0).avatar) ? (
-                                                    <img src={getPlayer(0).avatar} className="w-full h-full object-cover" alt={getPlayer(0).username} />
+                                                    <img src={getPlayer(0).avatar} className="w-full h-full object-cover" alt={getPlayer(0).username} referrerPolicy="no-referrer" />
                                                 ) : (
                                                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-yellow-900/80 to-amber-950/80 backdrop-blur-sm">
                                                         <span className="text-4xl text-yellow-400 font-bold drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]">{getPlayer(0).username.charAt(0).toUpperCase()}</span>
@@ -206,7 +206,7 @@ const Leaderboard: React.FC = () => {
                                             <div className="absolute -inset-1.5 rounded-full bg-gradient-to-br from-amber-500/60 via-orange-500/40 to-amber-600/60 blur-sm"></div>
                                             <div className="relative w-20 h-20 rounded-full overflow-hidden border-2 border-amber-500/60 shadow-[inset_0_2px_10px_rgba(255,255,255,0.15)]">
                                                 {isValidAvatarUrl(getPlayer(2).avatar) ? (
-                                                    <img src={getPlayer(2).avatar} className="w-full h-full object-cover" alt={getPlayer(2).username} />
+                                                    <img src={getPlayer(2).avatar} className="w-full h-full object-cover" alt={getPlayer(2).username} referrerPolicy="no-referrer" />
                                                 ) : (
                                                     <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-800/90 to-orange-950/90 backdrop-blur-sm">
                                                         <span className="text-3xl text-amber-400 font-bold drop-shadow-lg">{getPlayer(2).username.charAt(0).toUpperCase()}</span>
@@ -261,7 +261,7 @@ const Leaderboard: React.FC = () => {
                                         <div className="absolute -inset-0.5 rounded-full bg-gradient-to-r from-blue-500/50 to-purple-500/50 opacity-0 group-hover:opacity-100 blur transition-opacity duration-300"></div>
                                         <div className="relative w-10 h-10 rounded-full overflow-hidden bg-gray-700 border border-white/10">
                                             {isValidAvatarUrl(player.avatar) ? (
-                                                <img src={player.avatar} className="w-full h-full object-cover" alt={player.username} />
+                                                <img src={player.avatar} className="w-full h-full object-cover" alt={player.username} referrerPolicy="no-referrer" />
                                             ) : (
                                                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-600 to-gray-800">
                                                     <span className="text-lg text-gray-400 font-semibold">{player.username.charAt(0).toUpperCase()}</span>

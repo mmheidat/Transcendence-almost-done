@@ -45,6 +45,8 @@ const AvatarImage: React.FC<AvatarImageProps> = ({
                 src={src}
                 alt={alt}
                 loading="lazy"
+                referrerPolicy="no-referrer"
+                crossOrigin="anonymous"
                 className={`${className} ${isLoading ? 'opacity-0' : 'opacity-100'} transition-opacity duration-200`}
                 onLoad={() => setIsLoading(false)}
                 onError={() => {

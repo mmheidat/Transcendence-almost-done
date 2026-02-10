@@ -53,7 +53,7 @@ const Profile: React.FC = () => {
                         <div className="flex items-center space-x-6">
                             <div className="bg-rose-600 rounded-full w-24 h-24 flex items-center justify-center text-white text-4xl font-bold overflow-hidden shadow-lg shadow-rose-500/20">
                                 {profile.avatar_url ? (
-                                    <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                                    <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                 ) : (
                                     <span>{profile.username.substring(0, 2).toUpperCase()}</span>
                                 )}

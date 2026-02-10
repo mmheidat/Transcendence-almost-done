@@ -147,7 +147,7 @@ const SettingsPage: React.FC = () => {
                             <div className="relative group">
                                 <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-rose-500/50 bg-gray-700 shadow-lg">
                                     {avatarPreview ? (
-                                        <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
+                                        <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-600 to-gray-800">
                                             <span className="text-4xl text-gray-400 font-bold">

@@ -388,7 +388,7 @@ const Chat: React.FC = () => {
                                             <div key={user.id} className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg">
                                                 <div className="flex items-center">
                                                     <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center mr-3 overflow-hidden">
-                                                        {user.avatar_url ? <img src={user.avatar_url} className="w-full h-full object-cover" /> : (user.display_name || user.username).substring(0, 2).toUpperCase()}
+                                                        {user.avatar_url ? <img src={user.avatar_url} className="w-full h-full object-cover" referrerPolicy="no-referrer" /> : (user.display_name || user.username).substring(0, 2).toUpperCase()}
                                                     </div>
                                                     <span className="text-white font-medium">{user.display_name || user.username}</span>
                                                 </div>
@@ -415,7 +415,7 @@ const Chat: React.FC = () => {
                                                 <div key={req.id} className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg">
                                                     <div className="flex items-center">
                                                         <div className="w-10 h-10 rounded-full bg-gray-600 flex items-center justify-center mr-3 overflow-hidden">
-                                                            {req.from.avatar_url ? <img src={req.from.avatar_url} className="w-full h-full object-cover" /> : (req.from.display_name || req.from.username || '?').substring(0, 2).toUpperCase()}
+                                                            {req.from.avatar_url ? <img src={req.from.avatar_url} className="w-full h-full object-cover" referrerPolicy="no-referrer" /> : (req.from.display_name || req.from.username || '?').substring(0, 2).toUpperCase()}
                                                         </div>
                                                         <span className="text-white font-medium">{req.from.display_name || req.from.username || 'Unknown'}</span>
                                                     </div>
@@ -453,7 +453,7 @@ const Chat: React.FC = () => {
                                             className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors ${selectedFriend?.id === friend.id ? 'bg-rose-600/20 border border-rose-500/50' : 'hover:bg-gray-700 bg-gray-700/30'}`}
                                         >
                                             <div className="bg-gradient-to-br from-gray-600 to-gray-700 w-10 h-10 rounded-full flex items-center justify-center font-bold text-white mr-3 relative overflow-visible">
-                                                {friend.avatar_url ? <img src={friend.avatar_url} className="w-full h-full object-cover rounded-full" /> : (friend.display_name || friend.username).substring(0, 2).toUpperCase()}
+                                                {friend.avatar_url ? <img src={friend.avatar_url} className="w-full h-full object-cover rounded-full" referrerPolicy="no-referrer" /> : (friend.display_name || friend.username).substring(0, 2).toUpperCase()}
                                                 {/* Online Status */}
                                                 <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-gray-800 ${friend.is_online ? 'bg-green-500' : 'bg-gray-400'}`}></div>
 
@@ -485,7 +485,7 @@ const Chat: React.FC = () => {
                                 <div className="bg-gray-700/50 p-4 flex items-center justify-between border-b border-gray-600 backdrop-blur-sm relative z-10">
                                     <div className="flex items-center space-x-3">
                                         <div className="bg-rose-600 rounded-full w-10 h-10 flex items-center justify-center text-white font-bold overflow-hidden">
-                                            {selectedFriend.avatar_url ? <img src={selectedFriend.avatar_url} className="w-full h-full object-cover" /> : (selectedFriend.display_name || selectedFriend.username).substring(0, 2)}
+                                            {selectedFriend.avatar_url ? <img src={selectedFriend.avatar_url} className="w-full h-full object-cover" referrerPolicy="no-referrer" /> : (selectedFriend.display_name || selectedFriend.username).substring(0, 2)}
                                         </div>
                                         <div>
                                             <h3 className="text-white font-bold">{selectedFriend.display_name || selectedFriend.username}</h3>

@@ -130,6 +130,10 @@ class WebSocketClient extends EventEmitter {
         this.send('game_resume', { game_id: gameId });
     }
 
+    sendGameLeave(gameId: string) {
+        this.send('game_leave', { game_id: gameId });
+    }
+
 }
 
 

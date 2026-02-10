@@ -211,10 +211,12 @@ const wsHandler: FastifyPluginAsync = async (fastify) => {
             }
 
             // Check if this specific socket was in an active game and forfeit it
+            // Also match by userId when socket was never bound (e.g., player paused before any paddle updates)
             for (const [gameId, game] of activeGames.entries()) {
-                if ((game.player1 === userId && game.p1Socket === (connection.socket as WebSocket)) ||
-                    (game.player2 === userId && game.p2Socket === (connection.socket as WebSocket))) {
-                    // console.log(`User ${userId} disconnected from game ${gameId} (socket mismatch or closed) - triggering forfeit`);
+                const isPlayer1 = game.player1 === userId && (!game.p1Socket || game.p1Socket === (connection.socket as WebSocket));
+                const isPlayer2 = game.player2 === userId && (!game.p2Socket || game.p2Socket === (connection.socket as WebSocket));
+                if (isPlayer1 || isPlayer2) {
+                    // console.log(`User ${userId} disconnected from game ${gameId} - triggering forfeit`);
                     handleGameForfeit(userId, gameId, game);
                 }
             }
