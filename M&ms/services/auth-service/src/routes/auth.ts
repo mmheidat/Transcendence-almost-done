@@ -40,8 +40,7 @@ const googleOAuthConfig = {
             tokenPath: '/token'
         }
     },
-    startRedirectPath: '/api/auth/google',
-    callbackUri: (request: any) => `${getRequestOrigin(request)}/api/auth/google/callback`,
+    callbackUri: process.env.GOOGLE_REDIRECT_URI || 'http://localhost:8080/api/auth/google/callback',
     scope: ['email', 'profile']
 };
 
@@ -175,6 +174,9 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     // Google OAuth start
     fastify.get('/google', async (request, reply) => {
         try {
+            // Save the user's origin so we can redirect back to the right port after OAuth
+            const origin = getRequestOrigin(request);
+            reply.setCookie('oauth_origin', origin, { path: '/', httpOnly: true, sameSite: 'lax' });
             const authUrl = await fastify.googleOAuth2.generateAuthorizationUri(request, reply);
             return reply.redirect(authUrl);
         } catch (error) {
@@ -189,7 +191,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
             const result = await fastify.googleOAuth2.getAccessTokenFromAuthorizationCodeFlow(request);
 
             if (!result?.token?.access_token) {
-                const frontendUrl = getRequestOrigin(request);
+                const frontendUrl = (request as any).cookies?.oauth_origin || process.env.FRONTEND_URL || 'https://localhost:8443';
                 return reply.redirect(`${frontendUrl}?message=Failed to get access token`);
             }
 
@@ -199,7 +201,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
             );
 
             if (!googleUser.verified_email) {
-                const frontendUrl = getRequestOrigin(request);
+                const frontendUrl = (request as any).cookies?.oauth_origin || process.env.FRONTEND_URL || 'https://localhost:8443';
                 return reply.redirect(`${frontendUrl}?message=Email not verified`);
             }
 
@@ -249,12 +251,12 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
 
             const token = fastify.jwt.sign({ id: user.id, email: user.email, username: user.username });
 
-            const frontendUrl = getRequestOrigin(request);
+            const frontendUrl = (request as any).cookies?.oauth_origin || process.env.FRONTEND_URL || 'https://localhost:8443';
             return reply.redirect(`${frontendUrl}?token=${token}`);
 
         } catch (error) {
             console.error('OAuth callback error:', error);
-            const frontendUrl = getRequestOrigin(request);
+            const frontendUrl = (request as any).cookies?.oauth_origin || process.env.FRONTEND_URL || 'https://localhost:8443';
             return reply.redirect(`${frontendUrl}?message=Authentication failed`);
         }
     });
