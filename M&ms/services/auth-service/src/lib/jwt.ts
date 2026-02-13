@@ -1,7 +1,12 @@
 // Force reload
 import jwt from '@fastify/jwt';
-import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
+import { FastifyInstance } from 'fastify';
 
+// Register JWT plugin for Fastify.
+// 1) Registers @fastify/jwt so request.jwtVerify() / fastify.jwt.sign() become available
+// 2) Sets the JWT secret used to verify tokens
+// 3) Configures the default token expiration for signing
+// 4) Must be called during app bootstrap before routes that rely on JWT
 export async function registerJwt(fastify: FastifyInstance): Promise<void> {
     await fastify.register(jwt, {
         secret: process.env.JWT_SECRET || 'your-secret-key',
@@ -10,5 +15,3 @@ export async function registerJwt(fastify: FastifyInstance): Promise<void> {
         }
     });
 }
-
-// Auth middleware moved to authMiddleware.ts
